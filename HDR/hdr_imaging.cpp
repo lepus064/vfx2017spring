@@ -15,23 +15,19 @@
 #include <random>
 #include <stdio.h>
 #include <vector>
+#include <thread>
 
 using namespace cv;
 using namespace std;
 
 void loadExposureSeq(string, vector<Mat>&, vector<double>&);
-
 void loadExposureSeq(string, string, vector<Mat>&, vector<double>&);
-
 double weight(int z);
-
 int get_img_in_dir(string dir, vector<string> &files);
-
 void get_time_stamp(string dir, vector<string> files, vector<double> &timestamp);
+void get_color_E(int color,const int &n, const double &l, const vector<Point> &pts, const vector<double> &times, const vector<Mat> &images, Mat &HDR);
 
-
-int main(int argc, char**argv)
-{
+int main(int argc, char**argv){
 
     if(argc < 2){
         cout << "Usage: ./hdr_imaging <Path>" << endl;
@@ -42,13 +38,10 @@ int main(int argc, char**argv)
 
 
     // Some parameters
-    vector<Mat> images; // 1024*768
+    vector<Mat> images; // Example 1024*768
     vector<double> times;
     vector<string> names;
     vector<Point> pts;
-
-    const int p = 13;
-    const int n = 60;
 
     if(argc == 2){
         loadExposureSeq(argv[1], images, times);
@@ -64,11 +57,8 @@ int main(int argc, char**argv)
         return 0;
     }
 
-    if(images.size() != p){
-        cout << "Please change P to " << images.size() << endl;
-        return 0;
-    }
-    
+    const int p = images.size();
+    const int n = 60;
     const double l = 0.5;
     const int img_rows = images[0].rows; //768
     const int img_cols = images[0].cols; //1024
@@ -92,120 +82,34 @@ int main(int argc, char**argv)
             pts.push_back(temp_pt);
     }
 
-    
+    /* Show picked points */
 
-    // for(int i = 0; i < times.size();i++){
-    //     cout << names[i] << " : " <<times[i] << endl;
+    // int pick_one = images.size()/2;
+    // Mat PickedPointImg;
+    // images[pick_one].copyTo(PickedPointImg);
+    // for(const auto &i:pts){
+    //     circle(PickedPointImg,i,3,Scalar(0,0,255),-1);
     // }
+    // resize(PickedPointImg, PickedPointImg, Size(), 0.4, 0.4);
+    // imshow("All Picked Points",PickedPointImg);
+    // waitKey(5000); 
 
-
-    // Show picked points
-
-    int pick_one = images.size()/2;
-    Mat PickedPointImg;
-    images[pick_one].copyTo(PickedPointImg);
-    
-    for(const auto &i:pts){
-        circle(PickedPointImg,i,3,Scalar(0,0,255),-1);
-    }
-
-    resize(PickedPointImg, PickedPointImg, Size(), 0.4, 0.4);
-    imshow("All Picked Points",PickedPointImg);
-    waitKey(5000); 
-    
+    /* Result image */
     Mat HDR = Mat(Size(img_cols,img_rows),CV_32FC3);
+
+    /* Three Threads for BGR */
+    thread blue(get_color_E, 0, n, cref(l), cref(pts), cref(times), cref(images), ref(HDR));
+    thread green(get_color_E, 1, n, cref(l), cref(pts), cref(times), cref(images), ref(HDR));
+    thread red(get_color_E, 2, n, cref(l), cref(pts), cref(times), cref(images), ref(HDR));
+
+    blue.join();
+    green.join();
+    red.join();
     
-    //TODO
-    // Mat HDR2 = Mat(Size(img_cols,img_rows),CV_32FC3);
-
-    for(int which_color = 0; which_color < 3;which_color++){
-        auto A = Matx<double,n*p+255,256+n>::zeros();
-        auto b = Matx<double,n*p+255,1>::zeros();
-        auto x = Matx<double,256+n,1>::zeros();
-
-        int k = 0;
-        
-        for(int i = 0 ; i < n; i++){
-            for(int j = 0 ; j < p ; j++){
-                int Zij = images[j].at<Vec3b>(pts[i])[which_color];//B
-                A(k,Zij-1) = weight(Zij);
-                A(k,256+i) = -weight(Zij);
-                b(k,0) = weight(Zij)*log(times[j]);
-                k++;
-            }
-        }
-
-        A(k++,128) = 1;
-
-        for(int i = 0 ; i < 254; i++){
-            A(k,i) = l*weight(i+1);
-            A(k,i+1) = -2*l*weight(i+1);
-            A(k,i+2) = l*weight(i+1);
-            k++;
-        }
-
-        solve(A,b,x,DECOMP_SVD);
-
-        vector<double> g;
-        vector<double> lE;
-
-        for(int i = 0 ; i < x.rows; i++){
-            if(i < 256){
-                g.push_back(x(i,0));
-            }
-            else{
-                lE.push_back(x(i,0));
-            }
-        }
-
-
-        for(int i = 0 ; i < img_cols; i++){
-            for(int j = 0 ; j < img_rows ; j++){
-                Vec3f& color = HDR.at<Vec3f>(j,i);
-                double value = 0;
-                double total_w = 0;
-                for(int P = 0;P < times.size(); P++){
-                    int C = images[P].at<Vec3b>(j,i)[which_color];
-                    value += (weight(C)*(g[C] - log(times[P])));
-                    total_w += weight(C);
-                }
-                value /= total_w;
-                color[which_color] = exp(value);
-            }
-        }
-        if(which_color == 0){
-            cout << "Finished Blue color." << endl;
-        }
-        else if(which_color == 1){
-            cout << "Finished Green color." << endl;
-        }
-        else{
-            cout << "Finished Red color." << endl;
-        }
-
-        // TODO
-        // auto iter = HDR2.ptr();
-        // for(int j = 0 ; j < img_rows ; j++){
-        //     for(int i = 0 ; i < img_cols; i++){
-        //         // double value = 0;
-        //         // double total_w = 0;
-        //         // for(int P = 0;P < times.size(); P++){
-        //         //     int C = images[P].at<Vec3b>(j,i)[which_color];
-        //         //     value += (weight(C)*(g[C] - log(times[P])));
-        //         //     total_w += weight(C);
-        //         // }
-        //         // value /= total_w;
-        //         // iter[which_color] = exp(value);
-        //         iter[0] = 255;
-        //         iter++;
-        //     }
-        // }
-
-    }
+    cout << "Done!!" << endl;
     Mat reslut;
     imwrite("out.hdr",HDR);
-    // HDR.convertTo(result,)
-    // imshow("img2",HDR);
+    // imshow("img",HDR);
     // waitKey(5000);
 
     return 0;
@@ -289,4 +193,67 @@ void get_time_stamp(string dir, vector<string> files, vector<double> &timestamp)
     }
     
 
+}
+
+void get_color_E(int color,const int &n, const double &l, const vector<Point> &pts, const vector<double> &times,const vector<Mat> &images, Mat &HDR){
+
+    int k = 0;
+    const int p = images.size();
+    Mat A = Mat::zeros(n*p+255, 256+n, CV_32F);
+    Mat b = Mat::zeros(n*p+255, 1, CV_32F);
+    Mat x = Mat::zeros(256+n, 1, CV_32F);
+
+    const int img_rows = images[0].rows; //768
+    const int img_cols = images[0].cols; //1024
+    
+    for(int i = 0 ; i < n; i++){
+        for(int j = 0 ; j < p ; j++){
+            int Zij = images[j].at<Vec3b>(pts[i])[color];//B
+            A.at<float>(k,Zij) = weight(Zij);
+            A.at<float>(k,256+i) = -weight(Zij);
+            b.at<float>(k,0) = weight(Zij)*log(times[j]);
+            k++;
+        }
+    }
+
+    A.at<float>(k++,128) = 1;
+
+    for(int i = 0 ; i < 254; i++){
+        A.at<float>(k,i) = l*weight(i+1);
+        A.at<float>(k,i+1) = -2*l*weight(i+1);
+        A.at<float>(k,i+2) = l*weight(i+1);
+        k++;
+    }
+    
+    solve(A,b,x,DECOMP_SVD);
+
+    vector<double> g;
+    vector<double> lE;
+
+    for(int i = 0 ; i < x.rows; i++){
+        if(i < 256){
+            g.push_back(x.at<float>(i,0));
+        }
+        else{
+            lE.push_back(x.at<float>(i,0));
+        }
+    }
+
+    /* Using Pointer */
+    auto iter = HDR.ptr<float>();
+    iter += color;
+    for(int j = 0 ; j < img_rows ; j++){
+        for(int i = 0 ; i < img_cols; i++){
+            double value = 0;
+            double total_w = 0;
+            for(int P = 0;P < times.size(); P++){
+                int C = images[P].at<Vec3b>(j,i)[color];
+                value += (weight(C)*(g[C] - log(times[P])));
+                total_w += weight(C);
+            }
+            value /= total_w;
+            iter[0] = exp(value);
+            iter+=3;
+        }
+    }
 }
