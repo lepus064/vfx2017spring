@@ -2,7 +2,7 @@
 website:https://r05521501.wixsite.com/vfx2017spring
 ### Project1: High Dynamic Range Imaging
 
-## 使用相機:
+### 使用相機:
 
 Panasonic G7 + Panasonic LUMIX 14-42mm F3.5-5.6 ASPH
 
