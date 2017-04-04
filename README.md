@@ -22,3 +22,9 @@ easyexif:https://github.com/mayanklahiri/easyexif
 C++的多執行緒版本是在MacOS下寫的
 
 在ubuntu上Compile會有Error
+
+
+### 使用方法:
+cmake PATH_TO_HDR_DIRECTORY
+
+./hdr_imaging PATH_TO_IMAGE_DIRECTORY
