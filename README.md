@@ -20,6 +20,15 @@ easyexif:https://github.com/mayanklahiri/easyexif
 分別是C++和Python
 
 ### 使用方法:
-cmake PATH_TO_HDR_DIRECTORY
 
-./hdr_imaging PATH_TO_IMAGE_DIRECTORY
+git clone https://github.com/lepus064/vfx2017spring.git
+
+c++:
+
+cd HDR && mkdir build && cd build
+
+cmake ..
+
+./hdr_imaging ../../images/ce_building
+
+python:
