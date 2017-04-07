@@ -19,15 +19,22 @@ Nikon D750 + AF-S NIKKOR 35mm f/1.8G ED
 
 #### c++ ver:
 
+
 OpenCV 3.2.0 :http://opencv.org
+
 easyexif:https://github.com/mayanklahiri/easyexif
+
 
 #### python ver:
 
 Ubuntu 16.04
+
 OpenCV 3.2
+
 OpenCV package for python 
+
 Exifread （in order to get the exposure time of each picture)
+
 https://pypi.python.org/pypi/ExifRead
 
 
@@ -54,5 +61,6 @@ cmake ..
 #### python:
 
 cd HDR_python.ver/Resource/src
+
 python 0319.py
 
