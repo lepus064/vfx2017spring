@@ -1,3 +1,4 @@
+import sys
 import cv2
 import numpy as np
 import math
@@ -8,15 +9,11 @@ img_fn = []
 for i in range(35,66,1):
 	img_fn.append("img_" +str(i).zfill(3)+ ".jpg")
 
-#B = np.array([math.log(13),math.log(10),
-#	math.log(4),math.log(3),math.log(1),math.log(0.5),
-#	math.log(0.33),math.log(0.25),math.log(0.0167),
-#	math.log(0.0125),math.log(0.003125),math.log(0.0025),math.log(0.0001)], dtype=np.float32)
 B = [];
 
 # Open image file for reading (binary mode)
 for i in img_fn:
-	f = open("/Resource/input_image/" + i, 'rb')
+	f = open(sys.argv[1] + i, 'rb')
 	tags = exifread.process_file(f, stop_tag='ExposureTime')
 	strrr = tags['EXIF ExposureTime'].__str__()
 	strrr = strrr.split('/')
@@ -33,7 +30,6 @@ img_total = [cv2.imread(fn,cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH) for fn in 
 
 
 Z = np.zeros((3,len(img_total),100))
-#Z = [[[] for j in range(0,len(img_total),1)] for i in range(0,3) ] 
 
 iDis = len(img_total[0]) / 10
 jDis = len(img_total[0][0]) / 10
@@ -117,10 +113,6 @@ g = [[x[bgr][i] for i in range(z_min,z_max+1)] for bgr in range(0,3)]
 lE = [[x[bgr][i] for i in range(z_max+1,len(x[0]))] for bgr in range(0,3)]
 
 E = np.zeros( (len(img_total[0]),len(img_total[0][0]),3) ,dtype=np.float32)
-#E = np.zeros( (len(img_total[0]),len(img_total[0][0]),3) )
-#E = [len(img_total[0])][len(img_total[0][0])][3]
-#z[bgr][p][n]
-#img_total[p][i][j][bgr]
 
 
 for i in range(0,len(img_total[0]) ):
@@ -141,4 +133,4 @@ for i in E:
 
 
 cv2.cvtColor(E,cv2.COLOR_BGR2Luv)
-cv2.imwrite("/Resource/result/0329_2.hdr",E);
+cv2.imwrite(sys.argv[2],E);
