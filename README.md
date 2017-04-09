@@ -60,7 +60,6 @@ cmake ..
 
 #### python:
 
-cd HDR_python.ver/Resource/src
+python 0319.py ../Resource/input_image/ ../Resource/result/0329_2.hdr
 
-python 0319.py
-
+argv[1]放圖片路徑　　　argv[2]放hdr檔存取路徑跟檔名
