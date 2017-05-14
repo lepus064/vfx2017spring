@@ -46,12 +46,14 @@ git clone https://github.com/lepus064/vfx2017spring.git
 
 
 #### c++:
+```
 
 cd HDR && mkdir build && cd build
 
 cmake ..
 
 ./hdr_imaging ../../images/ce_building
+```
 
 如果無法compile可將CMakeLists.txt中的hdr_imaging_multi_thread.cpp
 
@@ -59,7 +61,9 @@ cmake ..
 
 
 #### python:
+```
 
 python 0319.py ../Resource/input_image/ ../Resource/result/0329_2.hdr
+```
 
 argv[1]放圖片路徑　　　argv[2]放hdr檔存取路徑跟檔名
