@@ -47,7 +47,6 @@ git clone https://github.com/lepus064/vfx2017spring.git
 
 #### c++:
 ```
-
 cd HDR && mkdir build && cd build
 
 cmake ..
@@ -62,7 +61,6 @@ cmake ..
 
 #### python:
 ```
-
 python 0319.py ../Resource/input_image/ ../Resource/result/0329_2.hdr
 ```
 
