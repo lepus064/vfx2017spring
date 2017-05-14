@@ -51,6 +51,8 @@ cd HDR && mkdir build && cd build
 
 cmake ..
 
+make
+
 ./hdr_imaging ../../images/ce_building
 ```
 
